@@ -24,11 +24,8 @@ DEALINGS IN THE SOFTWARE.
 */
 
 using System;
-using System.Collections;
 using System.IO;
-using System.Reflection;
-using System.Text.RegularExpressions;
-using System.Web.UI;
+using System.Xml;
 
 namespace CookComputing.XmlRpc
 {
@@ -84,7 +81,7 @@ namespace CookComputing.XmlRpc
     {
       using (MemoryStream stm = new MemoryStream())
       {
-        using (HtmlTextWriter wrtr = new HtmlTextWriter(new StreamWriter(stm)))
+        using (var wrtr = new XmlTextWriter(new StreamWriter(stm)))
         {
           XmlRpcDocWriter.WriteDoc(wrtr, this.GetType(), autoDocVersion);
           wrtr.Flush();
