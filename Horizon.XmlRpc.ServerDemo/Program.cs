@@ -9,7 +9,7 @@ namespace Horizon.XmlRpc.ServerDemo
             var listener = new HttpListener();
             listener.Prefixes.Add("http://127.0.0.1:5678/");
             listener.Start();
-
+            System.Console.WriteLine("Started Demo service. Press CTRL+C to exit..." );
             while (true)
             {
                 var context = listener.GetContext();

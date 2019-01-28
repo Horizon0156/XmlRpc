@@ -27,36 +27,47 @@ namespace CookComputing.XmlRpc
 {
   using System;
 
-  [AttributeUsage(AttributeTargets.Parameter)]
-  public class XmlRpcParameterAttribute : Attribute
+  [AttributeUsage(AttributeTargets.Method)]
+  public class XmlRpcBeginAttribute : Attribute
   {
-    public XmlRpcParameterAttribute()
+    public XmlRpcBeginAttribute()
     {
-    }
-    
-    public XmlRpcParameterAttribute(string name)
-    {
-      this.name = name;
     }
 
-    public string Name 
+    public XmlRpcBeginAttribute(string method)
     {
-      get { return name; }
+      this.method = method;
     }
-    
-    public string Description 
+
+    public string Method 
     {
-      get { return description; }
-      set { description = value; }
+      get 
+      { return method; }
     }
-    
+
+    public Type ReturnType 
+    {
+      get { return returnType; }
+      set { returnType = value; }
+    }
+
+    public bool IntrospectionMethod 
+    {
+      get { return introspectionMethod; }
+      set { introspectionMethod = value; }
+    }
+
     public override string ToString()
     {
-      string value = "Description : " + description;
+      string value = "Method : " + method;
       return value;
     }
-    
-    private string name = "";
-    private string description = "";
+
+    public string Description = "";
+    public bool Hidden = false;
+    private string method = "";
+    private bool introspectionMethod = false;
+    private Type returnType = null;
   }
 }
+

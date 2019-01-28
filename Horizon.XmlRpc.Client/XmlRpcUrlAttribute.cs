@@ -27,58 +27,23 @@ namespace CookComputing.XmlRpc
 {
   using System;
 
-  public class XmlRpcParameterInfo
+  [AttributeUsage(AttributeTargets.Class|AttributeTargets.Interface)]
+  public class XmlRpcUrlAttribute : Attribute
   {
-    public XmlRpcParameterInfo()
+    public XmlRpcUrlAttribute(string UriString)
     {
+      this.uri = UriString;
     }
-
-    public String Doc
+    public string Uri 
     {
-      get { return doc; }
-      set { doc = value; }
+      get 
+      { return uri; }
     }
-
-    public bool IsParams
+    public override string ToString()
     {
-      get { return isparams; }
-      set { isparams = value; }
+      string value = "Uri : " + uri;
+      return value;
     }
-
-    public String Name
-    {
-      get { return name; }
-      set 
-      { 
-        name = value; 
-        if (xmlRpcName == "")
-          xmlRpcName = name;
-      }
-    }
-
-    public String XmlRpcName
-    {
-      get { return xmlRpcName; }
-      set { xmlRpcName = value; }
-    }
-
-    public Type Type
-    {
-      get { return type; }
-      set { type = value; }
-    }
-
-    public string XmlRpcType
-    {
-      get { return xmlRpcType; }
-      set { xmlRpcType = value; }
-    }
-
-    string doc;
-    string name;
-    Type type;
-    string xmlRpcName;
-    string xmlRpcType;
-    bool isparams;
+    private string uri;
   }
 }
