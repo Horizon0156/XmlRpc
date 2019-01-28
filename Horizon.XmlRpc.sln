@@ -1,4 +1,4 @@
-
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.329
@@ -16,6 +16,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Horizon.XmlRpc.Client", "Horizon.XmlRpc.Client\Horizon.XmlRpc.Client.csproj", "{8BA54AA0-0F50-4718-A4BF-B21048DAC6E4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Horizon.XmlRpc.ClientDemo", "Horizon.XmlRpc.ClientDemo\Horizon.XmlRpc.ClientDemo.csproj", "{0D45EB8D-55EA-4C50-8F97-78EE8D17373F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CcuDemo", "CcuDemo\CcuDemo.csproj", "{CEBE32C0-6F94-4B57-84A1-11602664D144}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -43,6 +45,10 @@ Global
 		{0D45EB8D-55EA-4C50-8F97-78EE8D17373F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0D45EB8D-55EA-4C50-8F97-78EE8D17373F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0D45EB8D-55EA-4C50-8F97-78EE8D17373F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CEBE32C0-6F94-4B57-84A1-11602664D144}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CEBE32C0-6F94-4B57-84A1-11602664D144}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CEBE32C0-6F94-4B57-84A1-11602664D144}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CEBE32C0-6F94-4B57-84A1-11602664D144}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -53,6 +59,7 @@ Global
 		{773AD14D-1062-462A-8815-0F5856D3C70C} = {014D7AB6-8883-42B2-8262-7C9860CE4A8E}
 		{8BA54AA0-0F50-4718-A4BF-B21048DAC6E4} = {544E1814-5CBA-476F-B164-C1D0D32743C0}
 		{0D45EB8D-55EA-4C50-8F97-78EE8D17373F} = {014D7AB6-8883-42B2-8262-7C9860CE4A8E}
+		{CEBE32C0-6F94-4B57-84A1-11602664D144} = {014D7AB6-8883-42B2-8262-7C9860CE4A8E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F208D89A-60FF-4B33-BE39-977ADED34441}
