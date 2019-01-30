@@ -1,5 +1,6 @@
 ﻿using CookComputing.XmlRpc;
 using System;
+using System.Linq;
 
 namespace CcuDemo
 {
@@ -13,12 +14,12 @@ namespace CcuDemo
 
             var result = proxy.ListDevices();
 
-            foreach (var device in result)
+            foreach (var device in result.Where(d => d.IsDevice()))
             {
-                Console.WriteLine(device);
+                Console.WriteLine($"{device.Type} - {device.Address}: #Channels: {device.Children.Length}, Firmware: {device.Firmware}");
             }
 
-            Console.WriteLine("Turning Retro-Licht on...");
+            //Console.WriteLine("Turning Retro-Licht on...");
             //proxy.SetValue("000218A9928E62:3", "STATE", true); // Working but annoying ;)
 
 

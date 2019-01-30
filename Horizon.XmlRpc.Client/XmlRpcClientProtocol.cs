@@ -73,8 +73,8 @@ namespace CookComputing.XmlRpc
       = new X509CertificateCollection();
     private CookieContainer _cookies = new CookieContainer();
 #endif
-    #endregion
-    private Guid _id = Util.NewGuid();
+        #endregion
+        private Guid _id = Guid.NewGuid();
 
 
 #if (!COMPACT_FRAMEWORK)

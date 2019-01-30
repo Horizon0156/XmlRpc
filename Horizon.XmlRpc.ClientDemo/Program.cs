@@ -12,7 +12,6 @@ namespace Horizon.XmlRpc.ClientDemo
             Console.WriteLine("Calling Demo.addNumbers with [3,4]...");
             var result = proxy.AddNumbers(3, 4);
             Console.WriteLine("Received result: " + result);
-            Console.ReadKey();
         }
     }
 }
