@@ -23,18 +23,19 @@ To get a full example of running client and server in a .NET Core application, p
 
 First define a contrat for your service. This will be used by the client proxy and implemented from the service.
 
-```
-    using Horizon.XmlRpc.Core;
+```C#
+using Horizon.XmlRpc.Core;
 
-    public interface IAddService
-    {
-        [XmlRpcMethod("Demo.addNumbers")]
-        int AddNumbers(int numberA, int numberB);
-    }
+public interface IAddService
+{
+    [XmlRpcMethod("Demo.addNumbers")]
+    int AddNumbers(int numberA, int numberB);
+}
 ```
 
 Then define your service and start a new listener. To host the service with ASP.NET Cores please refer to the end of the documentation. 
-```
+
+```C#
 using Horizon.XmlRpc.Server;
 
 public class AddService : XmlRpcListenerService, IAddService
@@ -59,7 +60,7 @@ while (true)
 
 To consume the service, simply create a client proxy and use the contract to call its methods.
 
-```
+``` C#
 using Horizon.XmlRpc.Client;
 
 public interface IAddServiceProxy : IXmlRpcProxy, IAddService
