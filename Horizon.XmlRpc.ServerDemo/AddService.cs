@@ -1,4 +1,5 @@
-﻿using CookComputing.XmlRpc;
+﻿using Horizon.XmlRpc.Core;
+using Horizon.XmlRpc.Server;
 
 namespace Horizon.XmlRpc.ServerDemo
 {

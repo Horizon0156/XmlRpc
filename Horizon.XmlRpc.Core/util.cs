@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-namespace CookComputing.XmlRpc
+namespace Horizon.XmlRpc.Core
 {
     public static class Util
     {

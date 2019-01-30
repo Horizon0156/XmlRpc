@@ -1,7 +1,7 @@
 ﻿using System;
-using CookComputing.XmlRpc;
+using Horizon.XmlRpc.Client;
 
-namespace Horizon.XmlRpc.ClientDemo
+namespace Horizon.XmlRpc.Core.ClientDemo
 {
     class Program
     {
@@ -9,6 +9,7 @@ namespace Horizon.XmlRpc.ClientDemo
         {
 
             var proxy = XmlRpcProxyGen.Create<IAddService>();
+
             Console.WriteLine("Calling Demo.addNumbers with [3,4]...");
             var result = proxy.AddNumbers(3, 4);
             Console.WriteLine("Received result: " + result);

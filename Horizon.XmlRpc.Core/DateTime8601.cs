@@ -2,7 +2,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 
-namespace CookComputing.XmlRpc
+namespace Horizon.XmlRpc.Core
 {
     public static class DateTime8601
     {
