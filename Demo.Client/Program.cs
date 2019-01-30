@@ -8,7 +8,8 @@ namespace Horizon.XmlRpc.Core.ClientDemo
         static void Main(string[] args)
         {
 
-            var proxy = XmlRpcProxyGen.Create<IAddService>();
+            var proxy = XmlRpcProxyGen.Create<IAddServiceProxy>();
+            proxy.Url = "http://127.0.0.1:5678";
 
             Console.WriteLine("Calling Demo.addNumbers with [3,4]...");
             var result = proxy.AddNumbers(3, 4);

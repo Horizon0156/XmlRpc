@@ -5,9 +5,6 @@ namespace Horizon.XmlRpc.Core
     [AttributeUsage(AttributeTargets.ReturnValue)]
     public class XmlRpcReturnValueAttribute : Attribute
     {
-        public XmlRpcReturnValueAttribute()
-        {
-        }
         public string Description
         {
             get { return description; }

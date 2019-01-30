@@ -1,11 +1,10 @@
-﻿using Horizon.XmlRpc.Core;
+﻿using Demo.Contracts;
 using Horizon.XmlRpc.Server;
 
 namespace Horizon.XmlRpc.ServerDemo
 {
-    internal class AddService : XmlRpcListenerService
+    internal class AddService : XmlRpcListenerService, IAddService
     {
-        [XmlRpcMethod("Demo.addNumbers", Description = "Return product of number a and number b")]
         public int AddNumbers(int numberA, int numberB)
         {
             System.Console.WriteLine($"Received request to Demo.addNumbers. Parameters: [{numberA}, {numberB}]");

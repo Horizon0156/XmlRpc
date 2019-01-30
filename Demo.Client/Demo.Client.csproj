@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Horizon.XmlRpc.Server\Horizon.XmlRpc.Server.csproj" />
+    <ProjectReference Include="..\Horizon.XmlRpc.Client\Horizon.XmlRpc.Client.csproj" />
+    <ProjectReference Include="..\Demo.Contracts\Demo.Contracts.csproj" />
   </ItemGroup>
-
 </Project>
