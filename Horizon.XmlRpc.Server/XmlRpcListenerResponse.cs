@@ -33,12 +33,6 @@ namespace Horizon.XmlRpc.Server
             get { return response.OutputStream; }
         }
 
-        bool IHttpResponse.SendChunked
-        {
-            get { return response.SendChunked; }
-            set { response.SendChunked = value; }
-        }
-
         int IHttpResponse.StatusCode
         {
             get { return response.StatusCode; }

@@ -11,7 +11,6 @@ namespace Horizon.XmlRpc.Server
             {
                 IHttpRequest req = new XmlRpcListenerRequest(RequestContext.Request);
                 IHttpResponse resp = new XmlRpcListenerResponse(RequestContext.Response);
-                resp.SendChunked = SendChunked;
                 HandleHttpRequest(req, resp);
             }
             catch (Exception ex)
@@ -25,7 +24,5 @@ namespace Horizon.XmlRpc.Server
                 RequestContext.Response.OutputStream.Close();
             }
         }
-
-        public bool SendChunked { get; set; } = false;
     }
 }

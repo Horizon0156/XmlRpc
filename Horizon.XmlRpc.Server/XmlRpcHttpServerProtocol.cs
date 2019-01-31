@@ -41,10 +41,8 @@ namespace Horizon.XmlRpc.Server
             // process the request
             Stream responseStream = Invoke(httpReq.InputStream);
             httpResp.ContentType = "text/xml";
-            if (!httpResp.SendChunked)
-            {
-                httpResp.ContentLength = responseStream.Length;
-            }
+            httpResp.ContentLength = responseStream.Length;
+            
             Stream respStm = httpResp.OutputStream;
             Util.CopyStream(responseStream, respStm);
             respStm.Flush();
@@ -62,10 +60,8 @@ namespace Horizon.XmlRpc.Server
                     XmlRpcDocWriter.WriteDoc(wrtr, this.GetType(), autoDocVersion);
                     wrtr.Flush();
                     httpResp.ContentType = "text/html";
-                    if (!httpResp.SendChunked)
-                    {
-                        httpResp.ContentLength = stm.Length;
-                    }
+                    httpResp.ContentLength = stm.Length;
+                    
                     stm.Position = 0;
                     Stream respStm = httpResp.OutputStream;
                     Util.CopyStream(stm, respStm);

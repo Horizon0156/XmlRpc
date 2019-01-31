@@ -6,8 +6,6 @@ using Horizon.XmlRpc.Core;
 
 namespace Horizon.XmlRpc.Server
 {
-
-
     public class XmlRpcServerProtocol : SystemMethodsBase
     {
         public Stream Invoke(Stream requestStream)

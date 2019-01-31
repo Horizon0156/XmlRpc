@@ -1,4 +1,4 @@
-
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.329
@@ -18,6 +18,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Horizon.XmlRpc.Client", "Horizon.XmlRpc.Client\Horizon.XmlRpc.Client.csproj", "{1C8A0274-5558-468B-ADA1-B45A6F6ACD0D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Horizon.XmlRpc.Server", "Horizon.XmlRpc.Server\Horizon.XmlRpc.Server.csproj", "{8A7EE436-B06E-4747-912E-3C97DDBE9917}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Horizon.XmlRpc.AspNetCore", "Horizon.XmlRpc.AspNetCore\Horizon.XmlRpc.AspNetCore.csproj", "{2A3762BB-FD76-482F-9967-901974C1D057}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo.AspNetCore", "Demo.AspNetCore\Demo.AspNetCore.csproj", "{3933D14E-26E2-401D-AC91-C34153846CFC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -49,11 +53,21 @@ Global
 		{8A7EE436-B06E-4747-912E-3C97DDBE9917}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8A7EE436-B06E-4747-912E-3C97DDBE9917}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8A7EE436-B06E-4747-912E-3C97DDBE9917}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A3762BB-FD76-482F-9967-901974C1D057}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A3762BB-FD76-482F-9967-901974C1D057}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A3762BB-FD76-482F-9967-901974C1D057}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A3762BB-FD76-482F-9967-901974C1D057}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3933D14E-26E2-401D-AC91-C34153846CFC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3933D14E-26E2-401D-AC91-C34153846CFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3933D14E-26E2-401D-AC91-C34153846CFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3933D14E-26E2-401D-AC91-C34153846CFC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{3933D14E-26E2-401D-AC91-C34153846CFC} = {014D7AB6-8883-42B2-8262-7C9860CE4A8E}
+		{2A3762BB-FD76-482F-9967-901974C1D057} = {544E1814-5CBA-476F-B164-C1D0D32743C0}
 		{585C57CE-615C-4DE4-8CEC-1709E4F1931E} = {544E1814-5CBA-476F-B164-C1D0D32743C0}
 		{EDEE0D01-96A2-4D62-94A4-6F1622B467E7} = {014D7AB6-8883-42B2-8262-7C9860CE4A8E}
 		{51D03B22-524A-4C9F-AC8B-8887C25F8358} = {014D7AB6-8883-42B2-8262-7C9860CE4A8E}
