@@ -10,6 +10,13 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <ReleaseVersion>2.5.0</ReleaseVersion>
+    <PackageVersion>2.5.0</PackageVersion>
+    <Authors>Horizon0156</Authors>
+    <PackageProjectUrl>https://github.com/Horizon0156/XmlRpc</PackageProjectUrl>
+    <Description>ASP.NET Core integration for hosting XmlRpc Services. </Description>
+    <PackOnBuild>true</PackOnBuild>
+    <PackageId>Horizon.XmlRpc.AspNetCore</PackageId>
   </PropertyGroup>
 
 </Project>
