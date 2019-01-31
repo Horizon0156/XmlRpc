@@ -58,7 +58,7 @@ while (true)
 }
 ```
 
-To consume the service, simply create a client proxy and use the contract to call its methods.
+To consume the service, simply create a client proxy and use the contract to call its methods. The service also provides an automatically generated documentation by browing to the opened enpoint http://127.0.0.1:5678/
 
 ``` C#
 using Horizon.XmlRpc.Client;
@@ -77,6 +77,32 @@ Console.WriteLine("Received result: " + result);
 ```
 
 ## Hosting XML-RPC services with ASP.NET Core
-To be done...
+To use host service with ASP.NET Core simply reference the corresponding library and let the service inherit from `XmlRpcService`. Then register the services and define a route to one ore more XmlRpcServices.
+
+```C#
+public class AddService : XmlRpcService, IAddService
+{
+    public int AddNumbers(int numberA, int numberB)
+    {
+        return numberA + numberB;
+    }
+}
+```
+
+Within your startup class configure the service and register required dependencies. You can also inject dependencies within your service. The underlying service factory will make use of the service container.
+
+```C#
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddXmlRpc();
+}
+
+public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+{
+    app.UseXmlRpc(config => config.MapService<AddService>("xml-rpc"));
+}
+```
+Navigate to http://localhost:5000/xml-rpc to show the documentation or connect your XML-RPC client.
+
 
 For more information about XML-RPC refer to http://www.xmlrpc.com/
