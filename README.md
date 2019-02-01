@@ -3,8 +3,15 @@ This project targets to port Charles Cook's XML-RPC library to .NET Standard / .
 
 [XML-RPC.NET](http://xml-rpc.net/), the port and the extensions are released under the terms of the MIT license. See [License information](LICENSE.md) to get further information.
 
+## Installation
+All libraries are available on [nuget.org](https://www.nuget.org)
+* [Horizon.XmlRpc.Core](https://www.nuget.org/packages/Horizon.XmlRpc.Core/)
+* [Horizon.XmlRpc.Client](https://www.nuget.org/packages/Horizon.XmlRpc.Client/)
+* [Horizon.XmlRpc.Server](https://www.nuget.org/packages/Horizon.XmlRpc.Server/)
+* [Horizon.XmlRpc.AspNetCore](https://www.nuget.org/packages/Horizon.XmlRpc.AspNetCore/)
+
 ## Ported components
-The library, respectively its main components were ported to .NET Standard while only implementing required changes concerning the access to changed Framwork components. Therefore, the API hasn't changed. In addition, the library was refactored into assemblies.
+The library, respectively its main components were ported to .NET Standard while only implementing required changes concerning the access to changed Framwork components. Therefore, the API hasn't changed. In addition, the library was refactored into three dedicated assemblies.
 * `Horizon.XmlRpc.Core`
   Holds all the core members and contracts required by a XML-RPC servive as well as a XML-RPC client
 * `Horizon.XmlRpc.Client`  
