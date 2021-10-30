@@ -151,12 +151,14 @@ namespace Horizon.XmlRpc.Client
                 try
                 {
                     respStm = webResp.GetResponseStream();
+                    deserStream = respStm;
                     if (!logging)
                     {
                         deserStream = respStm;
                     }
                     else
                     {
+                        // Make the response stream seekable, so we can copy it later
                         deserStream = new MemoryStream(2000);
                         Util.CopyStream(respStm, deserStream);
                         deserStream.Flush();
@@ -166,7 +168,18 @@ namespace Horizon.XmlRpc.Client
                     deserStream = MaybeDecompressStream((HttpWebResponse)webResp,
                       deserStream);
 
-                                        try
+                    /*
+                     * ReadResponse() will close deserStream,
+                     * but for logging, we need to maintain a copy for the handlers
+                     */
+                    Stream deserStreamCopy = new MemoryStream();
+                    if (logging) {
+                        deserStream.CopyTo(deserStreamCopy);
+                        deserStream.Position = 0;
+                        deserStreamCopy.Position = 0;
+                    }
+                    
+                    try
                     {
                         XmlRpcResponse resp = ReadResponse(req, webResp, deserStream, null);
                         reto = resp.retVal;
@@ -175,9 +188,8 @@ namespace Horizon.XmlRpc.Client
                     {
                         if (logging)
                         {
-                            deserStream.Position = 0;
                             OnResponse(new XmlRpcResponseEventArgs(req.proxyId, req.number,
-                              deserStream));
+                              deserStreamCopy));
                         }
                     }
                 }
@@ -982,5 +994,3 @@ namespace Horizon.XmlRpc.Client
     public delegate void XmlRpcResponseEventHandler(object sender,
       XmlRpcResponseEventArgs args);
 }
-
-
