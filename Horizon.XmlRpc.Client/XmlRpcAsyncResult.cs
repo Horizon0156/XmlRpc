@@ -1,14 +1,19 @@
 using System;
 using System.IO;
 using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Horizon.XmlRpc.Core;
 
 namespace Horizon.XmlRpc.Client
 {
-    public class XmlRpcAsyncResult : IAsyncResult
+
+    public class XmlRpcAsyncResult : IAsyncResult, IDisposable
     {
+
+
         // IAsyncResult members
         public object AsyncState
         {
@@ -17,19 +22,7 @@ namespace Horizon.XmlRpc.Client
 
         public WaitHandle AsyncWaitHandle
         {
-            get
-            {
-                bool completed = isCompleted;
-                if (manualResetEvent == null)
-                {
-                    lock (this)
-                    {
-                        if (manualResetEvent == null)
-                            manualResetEvent = new ManualResetEvent(completed);
-                    }
-                }
-                if (!completed && isCompleted)
-                    manualResetEvent.Set();
+            get {
                 return manualResetEvent;
             }
         }
@@ -47,16 +40,6 @@ namespace Horizon.XmlRpc.Client
         public bool IsCompleted
         {
             get { return isCompleted; }
-        }
-
-        public CookieCollection ResponseCookies
-        {
-            get { return _responseCookies; }
-        }
-
-        public WebHeaderCollection ResponseHeaders
-        {
-            get { return _responseHeaders; }
         }
 
         public bool UseEmptyParamsTag
@@ -87,13 +70,15 @@ namespace Horizon.XmlRpc.Client
         // public members
         public void Abort()
         {
-            if (request != null)
-                request.Abort();
+            if (response != null && !response.IsCompleted && cancelSource != null) {
+                cancelSource.Cancel();
+            }
         }
 
         public Exception Exception
         {
             get { return exception; }
+            internal set { exception = value; }
         }
 
         public XmlRpcClientProtocol ClientProtocol
@@ -111,16 +96,14 @@ namespace Horizon.XmlRpc.Client
           int indentation,
           bool UseIntTag,
           bool UseStringTag,
-          WebRequest Request,
+          Task<HttpResponseMessage> Response,
           AsyncCallback UserCallback,
           object UserAsyncState,
           int retryNumber)
         {
             xmlRpcRequest = XmlRpcReq;
             clientProtocol = ClientProtocol;
-            request = Request;
             userAsyncState = UserAsyncState;
-            userCallback = UserCallback;
             completedSynchronously = true;
             xmlEncoding = XmlEncoding;
             _useEmptyParamsTag = useEmptyParamsTag;
@@ -128,54 +111,31 @@ namespace Horizon.XmlRpc.Client
             _indentation = indentation;
             _useIntTag = UseIntTag;
             _useStringTag = UseStringTag;
+            response = Response;
+            cancelSource = new CancellationTokenSource();
+            tcs = new TaskCompletionSource<HttpResponseMessage>(UserAsyncState);
+            manualResetEvent = new ManualResetEvent(response.IsCompleted);
+            response.ContinueWith((t, o) => {
+                if (t.IsFaulted)
+                    tcs.TrySetException(t.Exception.InnerExceptions);
+                else if (t.IsCanceled)
+                    tcs.TrySetCanceled();
+                else
+                    tcs.TrySetResult(t.Result);
+                manualResetEvent.Set();
+                if (UserCallback != null)
+                    UserCallback(this);
+            }, TaskScheduler.Default, cancelSource.Token);
         }
 
-        internal void Complete(
-          Exception ex)
+        internal HttpResponseMessage WaitForResponse()
         {
-            exception = ex;
-            Complete();
+            return response.Result;
         }
 
-        internal void Complete()
-        {
-            try
-            {
-                if (responseStream != null)
-                {
-                    responseStream.Close();
-                    responseStream = null;
-                }
-                if (responseBufferedStream != null)
-                    responseBufferedStream.Position = 0;
-            }
-            catch (Exception ex)
-            {
-                if (exception == null)
-                    exception = ex;
-            }
-            isCompleted = true;
-            try
-            {
-                if (manualResetEvent != null)
-                    manualResetEvent.Set();
-            }
-            catch (Exception ex)
-            {
-                if (exception == null)
-                    exception = ex;
-            }
-            if (userCallback != null)
-                userCallback(this);
-        }
-
-        internal WebResponse WaitForResponse()
-        {
-            if (!isCompleted)
-                AsyncWaitHandle.WaitOne();
-            if (exception != null)
-                throw exception;
-            return response;
+        public void Dispose() {
+            cancelSource?.Dispose();
+            response?.Dispose();
         }
 
         internal bool EndSendCalled
@@ -190,22 +150,11 @@ namespace Horizon.XmlRpc.Client
             set { buffer = value; }
         }
 
-        internal WebRequest Request
+        internal HttpResponseMessage Response
         {
-            get { return request; }
+            get { return response.Result; }
         }
 
-        internal WebResponse Response
-        {
-            get { return response; }
-            set { response = value; }
-        }
-
-        internal Stream ResponseStream
-        {
-            get { return responseStream; }
-            set { responseStream = value; }
-        }
 
         internal XmlRpcRequest XmlRpcRequest
         {
@@ -213,29 +162,18 @@ namespace Horizon.XmlRpc.Client
             set { xmlRpcRequest = value; }
         }
 
-        internal Stream ResponseBufferedStream
-        {
-            get { return responseBufferedStream; }
-            set { responseBufferedStream = value; }
-        }
-
         internal Encoding XmlEncoding
         {
             get { return xmlEncoding; }
         }
-
+        private TaskCompletionSource<HttpResponseMessage> tcs;
         XmlRpcClientProtocol clientProtocol;
-        WebRequest request;
-        AsyncCallback userCallback;
         object userAsyncState;
         bool completedSynchronously;
         bool isCompleted;
         bool endSendCalled = false;
         ManualResetEvent manualResetEvent;
         Exception exception;
-        WebResponse response;
-        Stream responseStream;
-        Stream responseBufferedStream;
         byte[] buffer;
         XmlRpcRequest xmlRpcRequest;
         Encoding xmlEncoding;
@@ -244,9 +182,8 @@ namespace Horizon.XmlRpc.Client
         int _indentation;
         bool _useIntTag;
         bool _useStringTag;
-
-        internal CookieCollection _responseCookies;
-        internal WebHeaderCollection _responseHeaders;
+        private readonly Task<HttpResponseMessage> response;
+        private readonly CancellationTokenSource cancelSource;
 
     }
 }

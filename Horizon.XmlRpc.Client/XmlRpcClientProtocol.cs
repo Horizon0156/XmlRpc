@@ -2,15 +2,18 @@ using System;
 using System.ComponentModel;
 using System.IO;
 using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Net.Security;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading.Tasks;
 using Horizon.XmlRpc.Core;
 
 namespace Horizon.XmlRpc.Client
 {
-    public class XmlRpcClientProtocol : Component, IXmlRpcProxy
-    {
+    public class XmlRpcClientProtocol : Component, IXmlRpcProxy {
         private bool _allowAutoRedirect = true;
 
         private string _connectionGroupName = null;
@@ -26,8 +29,7 @@ namespace Horizon.XmlRpc.Client
         private bool _preAuthenticate = false;
         private Version _protocolVersion = HttpVersion.Version11;
         private IWebProxy _proxy = null;
-        private CookieCollection _responseCookies;
-        private WebHeaderCollection _responseHeaders;
+        private HttpResponseHeaders _responseHeaders;
         private int _timeout = 100000;
         private string _url = null;
         private string _userAgent = "XML-RPC.NET";
@@ -44,276 +46,259 @@ namespace Horizon.XmlRpc.Client
         private Guid _id = Guid.NewGuid();
 
 
-        public XmlRpcClientProtocol(System.ComponentModel.IContainer container)
-        {
+        public XmlRpcClientProtocol(System.ComponentModel.IContainer container) {
             container.Add(this);
             InitializeComponent();
         }
 
-        public XmlRpcClientProtocol()
-        {
+        public XmlRpcClientProtocol() {
             InitializeComponent();
         }
 
         public object Invoke(
           MethodBase mb,
-          params object[] Parameters)
-        {
+          params object[] Parameters) {
             return Invoke(this, mb as MethodInfo, Parameters);
         }
 
         public object Invoke(
           MethodInfo mi,
-          params object[] Parameters)
-        {
+          params object[] Parameters) {
             return Invoke(this, mi, Parameters);
         }
 
         public object Invoke(
           string MethodName,
-          params object[] Parameters)
-        {
+          params object[] Parameters) {
             return Invoke(this, MethodName, Parameters);
         }
 
         public object Invoke(
           Object clientObj,
           string methodName,
-          params object[] parameters)
-        {
+          params object[] parameters) {
             MethodInfo mi = GetMethodInfoFromName(clientObj, methodName, parameters);
             return Invoke(this, mi, parameters);
+        }
+        public HttpClient _client = null;
+
+        public HttpClient Client {
+            get {
+                if (_client == null) {
+
+
+
+                    HttpClientHandler handler = new HttpClientHandler();
+                    if (_proxy != null) {
+                        handler.Proxy = _proxy;
+                        handler.CookieContainer = _cookies;
+                        handler.AllowAutoRedirect = _allowAutoRedirect;
+                        handler.PreAuthenticate = PreAuthenticate;
+                        handler.Credentials = Credentials;
+                        if (ClientCertificates != null && ClientCertificates.Count > 0) {
+                            handler.ClientCertificates.AddRange(ClientCertificates);
+                            handler.ClientCertificateOptions = ClientCertificateOption.Automatic;
+                        }
+                        if (_enableCompression) {
+                            handler.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+                        } else {
+                            handler.AutomaticDecompression = DecompressionMethods.None;
+                        }
+                    }
+
+
+                    _client = new HttpClient(handler);
+                    _client.Timeout = TimeSpan.FromMilliseconds(Timeout);
+                    if (_userAgent != null) {
+                        _client.DefaultRequestHeaders.UserAgent.Clear();
+                        _client.DefaultRequestHeaders.UserAgent.ParseAdd(_userAgent);
+                    }
+                    _client.DefaultRequestHeaders.AcceptEncoding.Clear();
+                    if (_enableCompression) {
+                        _client.DefaultRequestHeaders.AcceptEncoding.ParseAdd("gzip,deflate");
+                    }
+                    _client.DefaultRequestHeaders.ConnectionClose = !_keepAlive;
+                }
+                return _client;
+            }
         }
 
         public object Invoke(
           Object clientObj,
           MethodInfo mi,
-          params object[] parameters)
-        {
+          params object[] parameters) {
             _responseHeaders = null;
-            _responseCookies = null;
-
-            WebRequest webReq = null;
             object reto = null;
-            try
-            {
-                string useUrl = GetEffectiveUrl(clientObj);
-                webReq = GetWebRequest(new Uri(useUrl));
-                XmlRpcRequest req = MakeXmlRpcRequest(webReq, mi, parameters,
-                  clientObj, _xmlRpcMethod, _id);
-                SetProperties(webReq);
-                SetRequestHeaders(_headers, webReq);
-                SetClientCertificates(_clientCertificates, webReq);
-
-                Stream serStream = null;
-                Stream reqStream = null;
-                bool logging = (RequestEvent != null);
-                if (!logging)
-                    serStream = reqStream = webReq.GetRequestStream();
-                else
-                    serStream = new MemoryStream(2000);
-                try
-                {
-                    XmlRpcSerializer serializer = new XmlRpcSerializer();
-                    if (_xmlEncoding != null)
-                        serializer.XmlEncoding = _xmlEncoding;
-                    serializer.UseIndentation = _useIndentation;
-                    serializer.Indentation = _indentation;
-                    serializer.NonStandard = _nonStandard;
-                    serializer.UseStringTag = _useStringTag;
-                    serializer.UseIntTag = _useIntTag;
-                    serializer.UseEmptyParamsTag = _useEmptyParamsTag;
-                    serializer.SerializeRequest(serStream, req);
-                    if (logging)
-                    {
-                        reqStream = webReq.GetRequestStream();
-                        serStream.Position = 0;
-                        Util.CopyStream(serStream, reqStream);
-                        reqStream.Flush();
-                        serStream.Position = 0;
-                        OnRequest(new XmlRpcRequestEventArgs(req.proxyId, req.number,
-                          serStream));
-                    }
-                }
-                finally
-                {
-                    if (reqStream != null)
-                        reqStream.Close();
-                }
-                HttpWebResponse webResp = GetWebResponse(webReq) as HttpWebResponse;
-
-                _responseCookies = webResp.Cookies;
-                _responseHeaders = webResp.Headers;
-
-                Stream respStm = null;
-                Stream deserStream;
-                logging = (ResponseEvent != null);
-                try
-                {
-                    respStm = webResp.GetResponseStream();
-                    deserStream = respStm;
-                    if (!logging)
-                    {
-                        deserStream = respStm;
-                    }
-                    else
-                    {
-                        // Make the response stream seekable, so we can copy it later
-                        deserStream = new MemoryStream(2000);
-                        Util.CopyStream(respStm, deserStream);
-                        deserStream.Flush();
-                        deserStream.Position = 0;
-                    }
-
-                    deserStream = MaybeDecompressStream((HttpWebResponse)webResp,
-                      deserStream);
-
-                    /*
-                     * ReadResponse() will close deserStream,
-                     * but for logging, we need to maintain a copy for the handlers
-                     */
-                    Stream deserStreamCopy = new MemoryStream();
-                    if (logging) {
-                        deserStream.CopyTo(deserStreamCopy);
-                        deserStream.Position = 0;
-                        deserStreamCopy.Position = 0;
-                    }
-                    
-                    try
-                    {
-                        XmlRpcResponse resp = ReadResponse(req, webResp, deserStream, null);
-                        reto = resp.retVal;
-                    }
-                    finally
-                    {
-                        if (logging)
-                        {
-                            OnResponse(new XmlRpcResponseEventArgs(req.proxyId, req.number,
-                              deserStreamCopy));
-                        }
-                    }
-                }
-                finally
-                {
-                    if (respStm != null)
-                        respStm.Close();
+            _lastResponseUri = null;
+            Uri useUrl = new Uri(GetEffectiveUrl(clientObj));
+            XmlRpcRequest req = MakeXmlRpcRequest(mi, parameters, clientObj, _xmlRpcMethod, _id);
+            XmlRpcSerializer serializer = new XmlRpcSerializer();
+            if (_xmlEncoding != null) {
+                serializer.XmlEncoding = _xmlEncoding;
+            }
+            Stream serStream = new MemoryStream(2000);
+            serializer.UseIndentation = _useIndentation;
+            serializer.Indentation = _indentation;
+            serializer.NonStandard = _nonStandard;
+            serializer.UseStringTag = _useStringTag;
+            serializer.UseIntTag = _useIntTag;
+            serializer.UseEmptyParamsTag = _useEmptyParamsTag;
+            serializer.SerializeRequest(serStream, req);
+            bool logging = (RequestEvent != null);
+            if (logging) {
+                serStream.Position = 0;
+                MemoryStream copy = new MemoryStream();
+                serStream.CopyTo(copy);
+                copy.Position = 0;
+                try {
+                    OnRequest(new XmlRpcRequestEventArgs(req.proxyId, req.number, copy));
+                } finally {
+                    copy.Close();
                 }
             }
-            finally
-            {
-                if (webReq != null)
-                    webReq = null;
+            serStream.Position = 0;
+            StreamContent content = new StreamContent(serStream);
+            if (_headers != null) {
+                foreach (string key in _headers) {
+                    content.Headers.Add(key, _headers[key]);
+                }
+            }
+            content.Headers.ContentType = new MediaTypeHeaderValue("text/xml");
+            using (HttpResponseMessage response = Client.PostAsync(useUrl, content).Result) {
+                Stream responseNetworkStream = response.Content.ReadAsStreamAsync().Result;
+                _lastResponseUri = useUrl;
+                Stream responseStream;
+                _responseHeaders = response.Headers;
+                logging = (ResponseEvent != null);
+                if (logging) {
+                    responseStream = new MemoryStream();
+                    responseNetworkStream.CopyTo(responseStream);
+                    responseStream.Position = 0;
+                    MemoryStream copy = new MemoryStream();
+                    responseStream.CopyTo(copy);
+                    copy.Position = 0;
+                    responseStream.Position = 0;
+                    try {
+                        OnResponse(new XmlRpcResponseEventArgs(req.proxyId, req.number, copy));
+                    } finally {
+                        copy.Close();
+                    }
+                } else {
+                    responseStream = responseNetworkStream;
+                }
+                XmlRpcResponse resp = ReadResponse(req, response, responseStream, null);
+                reto = resp.retVal;
             }
             return reto;
         }
 
 
-        public bool AllowAutoRedirect
-        {
+        public bool AllowAutoRedirect {
             get { return _allowAutoRedirect; }
-            set { _allowAutoRedirect = value; }
+            set { _client?.Dispose(); _client = null; _allowAutoRedirect = value; }
         }
 
 
         [Browsable(false)]
-        public X509CertificateCollection ClientCertificates
-        {
+        public X509CertificateCollection ClientCertificates {
             get { return _clientCertificates; }
         }
 
-        public string ConnectionGroupName
-        {
+        public string ConnectionGroupName {
             get { return _connectionGroupName; }
             set { _connectionGroupName = value; }
         }
 
         [Browsable(false)]
-        public ICredentials Credentials
-        {
+        public ICredentials Credentials {
             get { return _credentials; }
-            set { _credentials = value; }
+            set { _client?.Dispose(); _client = null; _credentials = value; }
         }
 
-        public bool EnableCompression
-        {
+        public bool EnableCompression {
             get { return _enableCompression; }
-            set { _enableCompression = value; }
+            set { _client.Dispose(); _client = null; _enableCompression = value; }
         }
 
         [Browsable(false)]
-        public WebHeaderCollection Headers
-        {
+        public WebHeaderCollection Headers {
             get { return _headers; }
         }
 
-        public bool Expect100Continue
-        {
+        public bool Expect100Continue {
             get { return _expect100Continue; }
-            set { _expect100Continue = value; }
+            set { if (_client != null) { _client.DefaultRequestHeaders.ExpectContinue = value; }; _expect100Continue = value; }
         }
 
-        public CookieContainer CookieContainer
-        {
+        public CookieContainer CookieContainer {
             get { return _cookies; }
         }
 
-        public Guid Id
-        {
+        public Guid Id {
             get { return _id; }
         }
 
-        public int Indentation
-        {
+        public int Indentation {
             get { return _indentation; }
             set { _indentation = value; }
         }
 
-        public bool KeepAlive
-        {
+        public bool KeepAlive {
             get { return _keepAlive; }
-            set { _keepAlive = value; }
+            set { if (_client != null) { _client.DefaultRequestHeaders.ConnectionClose = !value; }; _keepAlive = value; }
         }
 
-        public XmlRpcNonStandard NonStandard
-        {
+        public XmlRpcNonStandard NonStandard {
             get { return _nonStandard; }
             set { _nonStandard = value; }
         }
 
-        public bool PreAuthenticate
-        {
+        public bool PreAuthenticate {
             get { return _preAuthenticate; }
-            set { _preAuthenticate = value; }
+            set { _client?.Dispose(); _client = null; _preAuthenticate = value; }
         }
 
         [Browsable(false)]
-        public System.Version ProtocolVersion
-        {
+        public System.Version ProtocolVersion {
             get { return _protocolVersion; }
             set { _protocolVersion = value; }
         }
 
         [Browsable(false)]
-        public IWebProxy Proxy
-        {
+        public IWebProxy Proxy {
             get { return _proxy; }
-            set { _proxy = value; }
+            set { _client?.Dispose(); _client = null; _proxy = value; }
         }
 
-        public CookieCollection ResponseCookies
-        {
-            get { return _responseCookies; }
+        private Uri _lastResponseUri = null;
+
+        public CookieCollection ResponseCookies {
+            get {
+                return _cookies.GetCookies(_lastResponseUri);
+            }
         }
 
-        public WebHeaderCollection ResponseHeaders
-        {
+        public HttpResponseHeaders ResponseHeaders {
             get { return _responseHeaders; }
         }
+
+        WebHeaderCollection IXmlRpcProxy.ResponseHeaders {
+            get {
+                WebHeaderCollection result = new WebHeaderCollection();
+                foreach (var kv in ResponseHeaders) {
+                    result.Add(kv.Key, kv.Value.ToString());
+                }
+                return result;
+            }
+    }
 
         public int Timeout
         {
             get { return _timeout; }
-            set { _timeout = value; }
+            set { if (_client != null) {
+                    _client.Timeout = TimeSpan.FromMilliseconds(value);
+                }
+                _timeout = value; }
         }
 
         public string Url
@@ -343,7 +328,11 @@ namespace Horizon.XmlRpc.Client
         public string UserAgent
         {
             get { return _userAgent; }
-            set { _userAgent = value; }
+            set { 
+                if (_client != null) {
+                    _client.DefaultRequestHeaders.UserAgent.ParseAdd(value);
+                }
+            _userAgent = value; }
         }
 
         public bool UseStringTag
@@ -365,55 +354,10 @@ namespace Horizon.XmlRpc.Client
             set { _xmlRpcMethod = value; }
         }
 
-
-        public void SetProperties(WebRequest webReq)
-        {
-            if (_proxy != null)
-                webReq.Proxy = _proxy;
-            HttpWebRequest httpReq = (HttpWebRequest)webReq;
-            httpReq.UserAgent = _userAgent;
-            httpReq.ProtocolVersion = _protocolVersion;
-            httpReq.KeepAlive = _keepAlive;
-            httpReq.CookieContainer = _cookies;
-            httpReq.ServicePoint.Expect100Continue = _expect100Continue;
-            httpReq.AllowAutoRedirect = _allowAutoRedirect;
-            webReq.Timeout = Timeout;
-            webReq.ConnectionGroupName = this._connectionGroupName;
-            webReq.Credentials = Credentials;
-            webReq.PreAuthenticate = PreAuthenticate;
-            // Compact Framework sets this to false by default
-            (webReq as HttpWebRequest).AllowWriteStreamBuffering = true;
-            if (_enableCompression)
-                webReq.Headers.Add(HttpRequestHeader.AcceptEncoding, "gzip,deflate");
-        }
-
-        private void SetRequestHeaders(
-          WebHeaderCollection headers,
-          WebRequest webReq)
-        {
-            foreach (string key in headers)
-            {
-                webReq.Headers.Add(key, headers[key]);
-            }
-        }
-
-        private void SetClientCertificates(
-          X509CertificateCollection certificates,
-          WebRequest webReq)
-        {
-            foreach (X509Certificate certificate in certificates)
-            {
-                HttpWebRequest httpReq = (HttpWebRequest)webReq;
-                httpReq.ClientCertificates.Add(certificate);
-            }
-        }
-
-        XmlRpcRequest MakeXmlRpcRequest(WebRequest webReq, MethodInfo mi,
+        XmlRpcRequest MakeXmlRpcRequest(MethodInfo mi,
           object[] parameters, object clientObj, string xmlRpcMethod,
           Guid proxyId)
         {
-            webReq.Method = "POST";
-            webReq.ContentType = "text/xml";
             string rpcMethodName = GetRpcMethodName(clientObj, mi);
             XmlRpcRequest req = new XmlRpcRequest(rpcMethodName, parameters, mi,
               xmlRpcMethod, proxyId);
@@ -422,20 +366,19 @@ namespace Horizon.XmlRpc.Client
 
         XmlRpcResponse ReadResponse(
           XmlRpcRequest req,
-          WebResponse webResp,
+          HttpResponseMessage respose,
           Stream respStm,
           Type returnType)
         {
-            HttpWebResponse httpResp = (HttpWebResponse)webResp;
-            if (httpResp.StatusCode != HttpStatusCode.OK)
+            if (respose.StatusCode != HttpStatusCode.OK)
             {
                 // status 400 is used for errors caused by the client
                 // status 500 is used for server errors (not server application
                 // errors which are returned as fault responses)
-                if (httpResp.StatusCode == HttpStatusCode.BadRequest)
-                    throw new XmlRpcException(httpResp.StatusDescription);
+                if (respose.StatusCode == HttpStatusCode.BadRequest)
+                    throw new XmlRpcException(respose.ReasonPhrase);
                 else
-                    throw new XmlRpcServerException(httpResp.StatusDescription);
+                    throw new XmlRpcServerException(respose.ReasonPhrase);
             }
             XmlRpcSerializer serializer = new XmlRpcSerializer();
             serializer.NonStandard = _nonStandard;
@@ -558,109 +501,61 @@ namespace Horizon.XmlRpc.Client
           object outerAsyncState)
         {
             string useUrl = GetEffectiveUrl(clientObj);
-            WebRequest webReq = GetWebRequest(new Uri(useUrl));
-            XmlRpcRequest xmlRpcReq = MakeXmlRpcRequest(webReq, mi,
-              parameters, clientObj, _xmlRpcMethod, _id);
-            SetProperties(webReq);
-            SetRequestHeaders(_headers, webReq);
 
-            SetClientCertificates(_clientCertificates, webReq);
-            Encoding useEncoding = null;
-            if (_xmlEncoding != null)
-                useEncoding = _xmlEncoding;
-            XmlRpcAsyncResult asr = new XmlRpcAsyncResult(this, xmlRpcReq,
-              useEncoding, _useEmptyParamsTag, _useIndentation, _indentation,
-              _useIntTag, _useStringTag, webReq, callback, outerAsyncState, 0);
-            webReq.BeginGetRequestStream(new AsyncCallback(GetRequestStreamCallback),
-              asr);
-            if (!asr.IsCompleted)
-                asr.CompletedSynchronously = false;
+            MemoryStream streamContent = new MemoryStream(2000);
+
+            
+            XmlRpcRequest xmlRpcReq = MakeXmlRpcRequest(mi, parameters, clientObj, _xmlRpcMethod, _id);
+
+            XmlRpcSerializer serializer = new XmlRpcSerializer();
+            if (_xmlEncoding != null) {
+                serializer.XmlEncoding = _xmlEncoding;
+            }
+            serializer.UseIndentation = _useIndentation;
+            serializer.Indentation = _indentation;
+            serializer.NonStandard = _nonStandard;
+            serializer.UseStringTag = _useStringTag;
+            serializer.UseIntTag = _useIntTag;
+            serializer.UseEmptyParamsTag = _useEmptyParamsTag;
+            serializer.SerializeRequest(streamContent, xmlRpcReq);
+            bool logging = (RequestEvent != null);
+            if (logging) {
+                streamContent.Position = 0;
+                MemoryStream copy = new MemoryStream();
+                streamContent.CopyTo(copy);
+                copy.Position = 0;
+                try {
+                    OnRequest(new XmlRpcRequestEventArgs(xmlRpcReq.proxyId, xmlRpcReq.number, copy));
+                } finally {
+                    copy.Close();
+                }
+            }
+            streamContent.Position = 0;
+            StreamContent content = new StreamContent(streamContent);
+            if (_headers != null) {
+                foreach (string key in _headers) {
+                    content.Headers.Add(key, _headers[key]);
+                }
+            }
+            content.Headers.ContentType = new MediaTypeHeaderValue("text/xml");
+            Task<HttpResponseMessage> response = Client.PostAsync(useUrl, content);
+
+            XmlRpcAsyncResult asr = new XmlRpcAsyncResult(this, xmlRpcReq, _xmlEncoding, _useEmptyParamsTag, _useIndentation, _indentation, _useIntTag, _useStringTag, response, callback, outerAsyncState, 0);
             return asr;
-        }
-
-        static void GetRequestStreamCallback(IAsyncResult asyncResult)
-        {
-            XmlRpcAsyncResult clientResult
-              = (XmlRpcAsyncResult)asyncResult.AsyncState;
-            clientResult.CompletedSynchronously = asyncResult.CompletedSynchronously;
-            try
-            {
-                Stream serStream = null;
-                Stream reqStream = null;
-                bool logging = (clientResult.ClientProtocol.RequestEvent != null);
-                if (!logging)
-                {
-                    serStream = reqStream
-                      = clientResult.Request.EndGetRequestStream(asyncResult);
-                }
-                else
-                    serStream = new MemoryStream(2000);
-                try
-                {
-                    XmlRpcRequest req = clientResult.XmlRpcRequest;
-                    XmlRpcSerializer serializer = new XmlRpcSerializer();
-                    if (clientResult.XmlEncoding != null)
-                        serializer.XmlEncoding = clientResult.XmlEncoding;
-                    serializer.UseEmptyParamsTag = clientResult.UseEmptyParamsTag;
-                    serializer.UseIndentation = clientResult.UseIndentation;
-                    serializer.Indentation = clientResult.Indentation;
-                    serializer.UseIntTag = clientResult.UseIntTag;
-                    serializer.UseStringTag = clientResult.UseStringTag;
-                    serializer.SerializeRequest(serStream, req);
-                    if (logging)
-                    {
-                        reqStream = clientResult.Request.EndGetRequestStream(asyncResult);
-                        serStream.Position = 0;
-                        Util.CopyStream(serStream, reqStream);
-                        reqStream.Flush();
-                        serStream.Position = 0;
-                        clientResult.ClientProtocol.OnRequest(
-                          new XmlRpcRequestEventArgs(req.proxyId, req.number, serStream));
-                    }
-                }
-                finally
-                {
-                    if (reqStream != null)
-                        reqStream.Close();
-                }
-                clientResult.Request.BeginGetResponse(
-                  new AsyncCallback(GetResponseCallback), clientResult);
-            }
-            catch (Exception ex)
-            {
-                ProcessAsyncException(clientResult, ex);
-            }
-        }
-
-        static void GetResponseCallback(IAsyncResult asyncResult)
-        {
-            XmlRpcAsyncResult result = (XmlRpcAsyncResult)asyncResult.AsyncState;
-            result.CompletedSynchronously = asyncResult.CompletedSynchronously;
-            try
-            {
-                result.Response = result.ClientProtocol.GetWebResponse(result.Request,
-                  asyncResult);
-            }
-            catch (Exception ex)
-            {
-                ProcessAsyncException(result, ex);
-                if (result.Response == null)
-                    return;
-            }
-            ReadAsyncResponse(result);
         }
 
         static void ReadAsyncResponse(XmlRpcAsyncResult result)
         {
-            if (result.Response.ContentLength == 0)
+            HttpResponseMessage responseMessage = result.Response;
+            if (responseMessage.Content.Headers.ContentLength.GetValueOrDefault() == 0)
             {
-                result.Complete();
+                result.Dispose();
                 return;
             }
             try
             {
-                result.ResponseStream = result.Response.GetResponseStream();
-                ReadAsyncResponseStream(result);
+                Stream networkStream = responseMessage.Content.ReadAsStreamAsync().Result;
+                ReadAsyncResponseStream(result, networkStream);
             }
             catch (Exception ex)
             {
@@ -668,13 +563,13 @@ namespace Horizon.XmlRpc.Client
             }
         }
 
-        static void ReadAsyncResponseStream(XmlRpcAsyncResult result)
+        static void ReadAsyncResponseStream(XmlRpcAsyncResult result, Stream networkStream)
         {
             IAsyncResult asyncResult;
             do
             {
                 byte[] buff = result.Buffer;
-                long contLen = result.Response.ContentLength;
+                long contLen = result.Response.Content.Headers.ContentLength.GetValueOrDefault(-1);
                 if (buff == null)
                 {
                     if (contLen == -1)
@@ -688,38 +583,40 @@ namespace Horizon.XmlRpc.Client
                         result.Buffer = new Byte[contLen];
                 }
                 buff = result.Buffer;
-                asyncResult = result.ResponseStream.BeginRead(buff, 0, buff.Length,
+                asyncResult = networkStream.BeginRead(buff, 0, buff.Length,
                   new AsyncCallback(ReadResponseCallback), result);
                 if (!asyncResult.CompletedSynchronously)
                     return;
             }
-            while (!(ProcessAsyncResponseStreamResult(result, asyncResult)));
+            while (!(ProcessAsyncResponseStreamResult(networkStream, result, asyncResult)));
         }
 
-        static bool ProcessAsyncResponseStreamResult(XmlRpcAsyncResult result,
+        static bool ProcessAsyncResponseStreamResult(Stream networkStream, XmlRpcAsyncResult result,
           IAsyncResult asyncResult)
         {
-            int endReadLen = result.ResponseStream.EndRead(asyncResult);
-            long contLen = result.Response.ContentLength;
+            int endReadLen = networkStream.EndRead(asyncResult);
+            long contLen = result.Response.Content.Headers.ContentLength.GetValueOrDefault(-1);
             bool completed;
+            MemoryStream bufferedStream = null;
             if (endReadLen == 0)
                 completed = true;
             else if (contLen > 0 && endReadLen == contLen)
             {
-                result.ResponseBufferedStream = new MemoryStream(result.Buffer);
+                bufferedStream = new MemoryStream(result.Buffer);
                 completed = true;
             }
             else
             {
-                if (result.ResponseBufferedStream == null)
+                if (bufferedStream == null)
                 {
-                    result.ResponseBufferedStream = new MemoryStream(result.Buffer.Length);
+                    bufferedStream = new MemoryStream(result.Buffer.Length);
                 }
-                result.ResponseBufferedStream.Write(result.Buffer, 0, endReadLen);
+                bufferedStream.Write(result.Buffer, 0, endReadLen);
                 completed = false;
             }
-            if (completed)
-                result.Complete();
+            if (completed) {
+                result.Dispose();
+            }
             return completed;
         }
 
@@ -728,13 +625,14 @@ namespace Horizon.XmlRpc.Client
         {
             XmlRpcAsyncResult result = (XmlRpcAsyncResult)asyncResult.AsyncState;
             result.CompletedSynchronously = asyncResult.CompletedSynchronously;
+            Stream stream = result.Response.Content.ReadAsStreamAsync().Result;
             if (asyncResult.CompletedSynchronously)
                 return;
             try
             {
-                bool completed = ProcessAsyncResponseStreamResult(result, asyncResult);
+                bool completed = ProcessAsyncResponseStreamResult(stream, result, asyncResult);
                 if (!completed)
-                    ReadAsyncResponseStream(result);
+                    ReadAsyncResponseStream(result, stream);
             }
             catch (Exception ex)
             {
@@ -745,15 +643,10 @@ namespace Horizon.XmlRpc.Client
         static void ProcessAsyncException(XmlRpcAsyncResult clientResult,
           Exception ex)
         {
-            WebException webex = ex as WebException;
-            if (webex != null && webex.Response != null)
-            {
-                clientResult.Response = webex.Response;
-                return;
-            }
             if (clientResult.IsCompleted)
                 throw new Exception("error during async processing");
-            clientResult.Complete(ex);
+            clientResult.Exception = ex;
+            clientResult.Dispose();
         }
 
         public object EndInvoke(
@@ -776,14 +669,28 @@ namespace Horizon.XmlRpc.Client
                 if (clientResult.EndSendCalled)
                     throw new Exception("dup call to EndSend");
                 clientResult.EndSendCalled = true;
-                HttpWebResponse webResp = (HttpWebResponse)clientResult.WaitForResponse();
+                HttpResponseMessage msg = clientResult.Response;
 
-                clientResult._responseCookies = webResp.Cookies;
-                clientResult._responseHeaders = webResp.Headers;
-
-                responseStream = clientResult.ResponseBufferedStream;
+                responseStream = msg.Content.ReadAsStreamAsync().Result;
                 if (ResponseEvent != null)
                 {
+                    MemoryStream copy = new MemoryStream();
+                    if (responseStream is MemoryStream copyable) {
+                        copyable.Position = 0;
+                        copyable.CopyTo(copy);
+                        copyable.Position = 0;
+                    } else {
+                        MemoryStream temp = new MemoryStream();
+                        responseStream.CopyTo(temp);
+                        temp.Position = 0;
+                        temp.CopyTo(copy);
+                        temp.Position = 0;
+                        try {
+                            responseStream.Close();
+                        } catch { }
+                        temp.Position = 0;
+                        responseStream = temp;
+                    }
                     OnResponse(new XmlRpcResponseEventArgs(
                       clientResult.XmlRpcRequest.proxyId,
                       clientResult.XmlRpcRequest.number,
@@ -791,11 +698,8 @@ namespace Horizon.XmlRpc.Client
                     responseStream.Position = 0;
                 }
 
-                responseStream = MaybeDecompressStream((HttpWebResponse)webResp,
-                  responseStream);
-
                 XmlRpcResponse resp = ReadResponse(clientResult.XmlRpcRequest,
-                  webResp, responseStream, returnType);
+                  msg, responseStream, returnType);
                 reto = resp.retVal;
             }
             finally
@@ -906,56 +810,6 @@ namespace Horizon.XmlRpc.Client
         {
         }
 
-        protected virtual WebRequest GetWebRequest(Uri uri)
-        {
-            WebRequest req = WebRequest.Create(uri);
-            return req;
-        }
-
-        protected virtual WebResponse GetWebResponse(WebRequest request)
-        {
-            WebResponse ret = null;
-            try
-            {
-                ret = request.GetResponse();
-            }
-            catch (WebException ex)
-            {
-                if (ex.Response == null)
-                    throw;
-                ret = ex.Response;
-            }
-            return ret;
-        }
-
-        // support for gzip and deflate
-        protected Stream MaybeDecompressStream(HttpWebResponse httpWebResp,
-          Stream respStream)
-        {
-            Stream decodedStream;
-            string contentEncoding = httpWebResp.ContentEncoding?.ToLower() ?? string.Empty;
-            string coen = httpWebResp.Headers["Content-Encoding"];
-            if (contentEncoding.Contains("gzip"))
-            {
-                decodedStream = new System.IO.Compression.GZipStream(respStream,
-                  System.IO.Compression.CompressionMode.Decompress);
-            }
-            else if (contentEncoding.Contains("deflate"))
-            {
-                decodedStream = new System.IO.Compression.DeflateStream(respStream,
-                  System.IO.Compression.CompressionMode.Decompress);
-            }
-            else
-                decodedStream = respStream;
-            return decodedStream;
-        }
-
-        protected virtual WebResponse GetWebResponse(WebRequest request,
-          IAsyncResult result)
-        {
-            return request.EndGetResponse(result);
-        }
-
         public event XmlRpcRequestEventHandler RequestEvent;
         public event XmlRpcResponseEventHandler ResponseEvent;
 
@@ -972,6 +826,8 @@ namespace Horizon.XmlRpc.Client
         {
             get { return ResponseEvent != null; }
         }
+
+
 
         protected virtual void OnResponse(XmlRpcResponseEventArgs e)
         {
