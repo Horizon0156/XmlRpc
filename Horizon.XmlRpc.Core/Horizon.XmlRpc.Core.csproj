@@ -2,16 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <ReleaseVersion>2.5.0</ReleaseVersion>
-    <PackageVersion>2.5.0</PackageVersion>
+    <ReleaseVersion>2.5.2</ReleaseVersion>
+    <PackageVersion>2.5.2</PackageVersion>
     <Authors>Horizon0156</Authors>
     <PackageProjectUrl>https://github.com/Horizon0156/XmlRpc</PackageProjectUrl>
     <Description>Port of Charles Cook's XML-RPC library to .NET Standard / .NET Core</Description>
-    <PackOnBuild>true</PackOnBuild>
     <PackageId>Horizon.XmlRpc.Core</PackageId>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="NuGet.Build.Packaging" Version="0.2.0" />
-  </ItemGroup>
 </Project>

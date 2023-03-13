@@ -1,10 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <ReleaseVersion>2.5.0</ReleaseVersion>
-    <PackOnBuild>true</PackOnBuild>
-    <PackageVersion>2.5.0</PackageVersion>
+    <ReleaseVersion>2.5.2</ReleaseVersion>
+    <PackageVersion>2.5.2</PackageVersion>
     <Authors>Horizon0156</Authors>
     <PackageProjectUrl>https://github.com/Horizon0156/XmlRpc</PackageProjectUrl>
     <Description>XmlRpcProxyGen port of Charles Cook's XML-RPC library to .NET Standard / .NET Core. </Description>
@@ -14,7 +13,6 @@
   <ItemGroup>
     <PackageReference Include="System.CodeDom" Version="4.5.0" />
     <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
-    <PackageReference Include="NuGet.Build.Packaging" Version="0.2.0" />
   </ItemGroup>
 
   <ItemGroup>
