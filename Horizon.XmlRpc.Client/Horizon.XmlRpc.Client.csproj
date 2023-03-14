@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
     <ReleaseVersion>2.5.2</ReleaseVersion>
     <PackageVersion>2.5.2</PackageVersion>
     <Authors>Horizon0156</Authors>
@@ -10,6 +10,11 @@
     <PackageId>Horizon.XmlRpc.Client</PackageId>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net5.0'">
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>5.0</AnalysisLevel>
+  </PropertyGroup>
+  
   <ItemGroup>
     <PackageReference Include="System.CodeDom" Version="4.5.0" />
     <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
