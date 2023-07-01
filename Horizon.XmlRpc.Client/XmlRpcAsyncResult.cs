@@ -39,7 +39,7 @@ namespace Horizon.XmlRpc.Client
 
         public bool IsCompleted
         {
-            get { return isCompleted; }
+            get { return response.IsCompleted; }
         }
 
         public bool UseEmptyParamsTag
@@ -170,7 +170,6 @@ namespace Horizon.XmlRpc.Client
         XmlRpcClientProtocol clientProtocol;
         object userAsyncState;
         bool completedSynchronously;
-        bool isCompleted;
         bool endSendCalled = false;
         ManualResetEvent manualResetEvent;
         Exception exception;

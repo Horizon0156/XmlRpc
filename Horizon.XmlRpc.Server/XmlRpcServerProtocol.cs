@@ -73,7 +73,7 @@ namespace Horizon.XmlRpc.Server
             {
                 if (ex.InnerException != null)
                     throw ex.InnerException;
-                throw ex;
+                throw;
             }
             XmlRpcResponse response = new XmlRpcResponse(reto);
             return response;
