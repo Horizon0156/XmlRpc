@@ -130,7 +130,7 @@ namespace Horizon.XmlRpc.Server
 
             wrtr.WriteStartElement("h2");
             wrtr.WriteStartElement("a");
-            wrtr.WriteAttributeString("name", "#" + mthdInfo.XmlRpcName);
+            wrtr.WriteAttributeString("name", mthdInfo.XmlRpcName);
             wrtr.WriteString("method " + mthdInfo.XmlRpcName);
             wrtr.WriteEndElement();
             wrtr.WriteEndElement();
