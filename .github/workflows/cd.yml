@@ -23,4 +23,4 @@ jobs:
     - name: Pack NuGet
       run: dotnet pack -c Release --no-build --output .
     - name: Push NuGet
-      run: dotnet nuget push "*.nupkg" --api-key ${{secrets.NUGETAPIKEY}} --source https://api.nuget.org/v3/index.json
+      run: dotnet nuget push "Horizon.*.nupkg" --api-key ${{secrets.NUGETAPIKEY}} --source https://api.nuget.org/v3/index.json
