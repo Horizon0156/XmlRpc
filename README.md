@@ -71,7 +71,7 @@ The service also provides an automatically generated documentation by browing to
 
 To consume the service, simply create a client proxy...
 
-``` C#
+```C#
 using Horizon.XmlRpc.Client;
 
 public interface IAddServiceProxy : IXmlRpcProxy, IAddService
@@ -81,7 +81,7 @@ public interface IAddServiceProxy : IXmlRpcProxy, IAddService
 
  and use the proxy to call its methods. 
 
-```
+```C#
 using Horizon.XmlRpc.Client;
 
 var proxy = XmlRpcProxyGen.Create<IAddServiceProxy>();
