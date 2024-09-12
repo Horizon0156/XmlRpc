@@ -1,6 +1,6 @@
 ﻿using Horizon.XmlRpc.Core;
 
-namespace Demo.Contracts
+namespace Contracts
 {
     /// <summary>
     ///     XML-RPC Service that adds two numbers
@@ -13,7 +13,8 @@ namespace Demo.Contracts
         /// <returns> Sum of the numbers .</returns>
         /// <param name="numberA"> Summand a.</param>
         /// <param name="numberB"> Summand b.</param>
-        [XmlRpcMethod("Demo.addNumbers")]
+        [XmlRpcMethod("addNumbers")]
         int AddNumbers(int numberA, int numberB);
     }
+
 }

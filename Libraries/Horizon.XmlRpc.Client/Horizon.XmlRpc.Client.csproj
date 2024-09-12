@@ -1,18 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1</TargetFrameworks>
     <ReleaseVersion>2.5.2</ReleaseVersion>
     <PackageVersion>2.5.2</PackageVersion>
     <Authors>Horizon0156</Authors>
     <PackageProjectUrl>https://github.com/Horizon0156/XmlRpc</PackageProjectUrl>
     <Description>XmlRpcProxyGen port of Charles Cook's XML-RPC library to .NET Standard / .NET Core. </Description>
     <PackageId>Horizon.XmlRpc.Client</PackageId>
-  </PropertyGroup>
-
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'net5.0'">
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>
-    <AnalysisLevel>5.0</AnalysisLevel>
   </PropertyGroup>
   
   <ItemGroup>
