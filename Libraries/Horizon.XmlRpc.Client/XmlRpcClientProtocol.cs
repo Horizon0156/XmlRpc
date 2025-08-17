@@ -20,6 +20,7 @@ namespace Horizon.XmlRpc.Client
 
         private bool _expect100Continue = false;
         private bool _enableCompression = false;
+        private bool _enableClientCompression = false;
 
         private ICredentials _credentials = null;
         private WebHeaderCollection _headers = new WebHeaderCollection();
@@ -157,6 +158,8 @@ namespace Horizon.XmlRpc.Client
                 }
             }
             serStream.Position = 0;
+            if (_enableClientCompression)
+                serStream = Util.GZipStream(serStream);
             StreamContent content = new StreamContent(serStream);
             if (_headers != null) {
                 foreach (string key in _headers) {
@@ -164,6 +167,8 @@ namespace Horizon.XmlRpc.Client
                 }
             }
             content.Headers.ContentType = new MediaTypeHeaderValue("text/xml");
+            if (_enableClientCompression)
+                content.Headers.Add("Content-Encoding", "gzip");
             using (HttpResponseMessage response = Client.PostAsync(useUrl, content).Result) {
                 Stream responseNetworkStream = response.Content.ReadAsStreamAsync().Result;
                 _lastResponseUri = useUrl;
@@ -217,7 +222,12 @@ namespace Horizon.XmlRpc.Client
 
         public bool EnableCompression {
             get { return _enableCompression; }
-            set { _client.Dispose(); _client = null; _enableCompression = value; }
+            set { _client?.Dispose(); _client = null; _enableCompression = value; }
+        }
+
+        public bool EnableClientCompression {
+            get { return _enableClientCompression; }
+            set { _enableClientCompression = value; }
         }
 
         [Browsable(false)]
@@ -531,6 +541,8 @@ namespace Horizon.XmlRpc.Client
                 }
             }
             streamContent.Position = 0;
+            if (_enableClientCompression)
+                streamContent = Util.GZipStream(streamContent);
             StreamContent content = new StreamContent(streamContent);
             if (_headers != null) {
                 foreach (string key in _headers) {
@@ -538,6 +550,8 @@ namespace Horizon.XmlRpc.Client
                 }
             }
             content.Headers.ContentType = new MediaTypeHeaderValue("text/xml");
+            if (_enableClientCompression)
+                content.Headers.Add("Content-Encoding", "gzip");
             Task<HttpResponseMessage> response = Client.PostAsync(useUrl, content);
 
             XmlRpcAsyncResult asr = new XmlRpcAsyncResult(this, xmlRpcReq, _xmlEncoding, _useEmptyParamsTag, _useIndentation, _indentation, _useIntTag, _useStringTag, response, callback, outerAsyncState, 0);

@@ -20,6 +20,7 @@ namespace Horizon.XmlRpc.Client
         ICredentials Credentials { get; set; }
 
         bool EnableCompression { get; set; }
+        bool EnableClientCompression { get; set; }
         bool Expect100Continue { get; set; }
 
         [Browsable(false)]
