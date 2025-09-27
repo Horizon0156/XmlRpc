@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Text;
 
 namespace Horizon.XmlRpc.Core
@@ -49,6 +50,43 @@ namespace Horizon.XmlRpc.Core
                 Trace.WriteLine(s);
                 s = trdr.ReadLine();
             }
+        }
+
+        public static MemoryStream GZipStream(Stream stm)
+        {
+            var compressedStream = new MemoryStream();
+            using (var gzip = new GZipStream(compressedStream, CompressionLevel.Fastest, true))
+            {
+                CopyStream(stm, gzip);
+            }
+            compressedStream.Position = 0;
+            return compressedStream;
+        }
+
+        public static MemoryStream UnGZipStream(Stream stm)
+        {
+            return UnCompressStream(stm, true);
+        }
+
+        public static MemoryStream UnDeflateStream(Stream stm)
+        {
+            return UnCompressStream(stm, false);
+        }
+
+        private static MemoryStream UnCompressStream(Stream stm, bool isGzip)
+        {
+            var decompressedStream = new MemoryStream();
+            Stream decompStream;
+            if (isGzip)
+                decompStream = new GZipStream(stm, CompressionMode.Decompress, true);
+            else
+                decompStream = new DeflateStream(stm, CompressionMode.Decompress, true);
+            using (decompStream)
+            {
+                CopyStream(decompStream, decompressedStream);
+            }
+            decompressedStream.Position = 0;
+            return decompressedStream;
         }
     }
 }

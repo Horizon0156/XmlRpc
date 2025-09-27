@@ -6,7 +6,7 @@ namespace Server;
 public class XmlRpcService(
     ILogger<XmlRpcService> logger,
     HttpListener httpListener,
-    AddService addService) : BackgroundService
+    Services services) : BackgroundService
 {
     private readonly ILogger<XmlRpcService> _logger = logger;
 
@@ -20,7 +20,7 @@ public class XmlRpcService(
         while (!stoppingToken.IsCancellationRequested)
         {
             var context = httpListener.GetContext();
-            addService.ProcessRequest(context);
+            services.ProcessRequest(context);
         }
 
         return Task.CompletedTask;
