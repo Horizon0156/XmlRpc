@@ -6,7 +6,7 @@ namespace Server;
 public class XmlRpcService(
     ILogger<XmlRpcService> logger,
     HttpListener httpListener,
-    Services services) : BackgroundService
+    AddService services) : BackgroundService
 {
     private readonly ILogger<XmlRpcService> _logger = logger;
 
